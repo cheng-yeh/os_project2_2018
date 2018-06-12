@@ -8,12 +8,9 @@ This is the source code of operating system project2.
 
 
 To use it, please:
-1.change to super user
-2.execute "./compile.sh" to compile codes and install modules
-3.follow the input instrutions in the spec, 
-i.e.
-./master ../data/file1_in mmap
-./slave ../data/file1_out fcntl 127.0.0.1
+1.execute "./compile.sh" to compile codes and install modules
+2.execute "./exec.sh f" to transmit all the data with file I/O
+  execute "./exec.sh m" to transmit all the data with mmap I/O
 
 Make sure that you are under the path "./user_program" when you execute user programs.
 Though the execution order of user program "master" and "slave" does not matter,
