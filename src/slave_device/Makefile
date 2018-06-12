@@ -1,14 +1,13 @@
-#
-  # Makefile for kernel test
-  #
-PWD         := $(shell pwd) 
-KVERSION    := $(shell uname -r)
-KERNEL_DIR   = /usr/src/linux-headers-$(KVERSION)/
-MODULE_NAME  = slave_device
-obj-m       := $(MODULE_NAME).o   
+MODULENAME = slave_device
 
-all:
-	cp ../ksocket/Module.symvers ./Module.symvers
-	make -C $(KERNEL_DIR) M=$(PWD) modules
+obj-m += $(MODULENAME).o
+CFLAGS_$(MODULENAME) := -Wall
+
+all: module
+
+module:
+        make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+
 clean:
-	make -C $(KERNEL_DIR) M=$(PWD) clean
+        make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+
