@@ -65,6 +65,22 @@ int main (int argc, char* argv[])
 				write(dev_fd, buf, ret);//write to the the device
 			}while(ret > 0);
 			break;
+		case 'm': //mmap : magic()
+			void* mmapped = mmap(NULL, file_size, PROT_READ, MAP_PRIVATE | MAP_POPULATE, file_fd, 0);
+			
+			if(mmapped == MAP_FAILED){
+				perror("mmap fial!\n")
+				return -1;
+			}
+			ret = file_size;
+			do{
+				if(ret >= PAGE_SIZE)
+					write(dev_fd, mmapped, PAGE_SIZE);
+				else
+					write(dev_fd, mmapped, ret);	
+				
+				ret -= PAGE_SIZE;
+			}while(ret > 0);
 	}
 
 	if(ioctl(dev_fd, 0x12345679) == -1) // end sending data, close the connection
