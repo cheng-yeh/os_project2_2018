@@ -1,4 +1,4 @@
-MODULENAME = miniex
+MODULENAME = master_device
 
 obj-m += $(MODULENAME).o
 CFLAGS_$(MODULENAME) := -Wall
