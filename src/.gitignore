@@ -1,8 +1,8 @@
-/data/*_out
+/*/*_out
 /*/*.o*
 /*/*.ko
 /*/*.o
-/*/sxgdebug.h
+/*/.*
 /*/*.symvers
 /user_program/master
 /user_program/slave
