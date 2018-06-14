@@ -23,6 +23,7 @@ int main (int argc, char* argv[])
 	struct timeval end;
 	double trans_time; //calulate the time between the device is opened and it is closed
 	char *kernel_address, *file_address;
+	void* mmapped;
 
 
 	strcpy(file_name, argv[1]);
@@ -62,10 +63,24 @@ int main (int argc, char* argv[])
 			}while(ret > 0);
 			break;
 		case 'm': //mmap : magic!
-			break;
+			mmapped = mmap(NULL, file_size, PROT_READ, MAP_PRIVATE | MAP_POPULATE, file_fd, 0);
+			
+			if(mmapped == MAP_FAILED){
+				perror("mmap fial!\n");
+				return -1;
+			}
+			ret = file_size;
+			do{
+				if(ret >= 512)
+					//printf("mmap write: %d\n", write(dev_fd, mmapped, 512));
+					write(dev_fd, mmapped, 512);
+				else
+					//printf("mmap write: %d\n", write(dev_fd, mmapped, ret));
+					write(dev_fd, mmapped, ret);	
+				
+				ret -= 512;
+			}while(ret > 0);
 	}
-
-
 
 	if(ioctl(dev_fd, 0x12345679) == -1)// end receiving data, close the connection
 	{

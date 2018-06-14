@@ -24,6 +24,7 @@ int main (int argc, char* argv[])
 	struct timeval start;
 	struct timeval end;
 	double trans_time; //calulate the time between the device is opened and it is closed
+	void* mmapped;
 
 
 	strcpy(file_name, argv[1]);
@@ -55,8 +56,6 @@ int main (int argc, char* argv[])
 		return 1;
 	}
 	
-	void* mmapped;
-
 	switch(method[0])
 	{
 		case 'f': //fcntl : read()/write()
