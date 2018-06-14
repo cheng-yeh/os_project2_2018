@@ -53,7 +53,7 @@ static void __exit slave_exit(void);
 int slave_close(struct inode *inode, struct file *filp);
 int slave_open(struct inode *inode, struct file *filp);
 static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param);
-ssize_t receive_msg(struct file *filp, char *buf, size_t count, loff_t *offp );
+int receive_msg(struct file *filp, char *buf, size_t count, loff_t *offp );
 
 static mm_segment_t old_fs;
 static ksocket_t sockfd_cli;//socket to the master server
@@ -120,18 +120,15 @@ static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long
 	unsigned char *px;
 
     pgd_t *pgd;
-	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
     pte_t *ptep, pte;
 	old_fs = get_fs();
 	set_fs(KERNEL_DS);
 
-    printk("slave device ioctl");
 
 	switch(ioctl_num){
 		case slave_IOCTL_CREATESOCK:// create socket and connect to master
-            printk("slave device ioctl create socket");
 
 			if(copy_from_user(ip, (char*)ioctl_param, sizeof(ip)))
 				return -ENOMEM;
@@ -159,7 +156,6 @@ static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long
 			tmp = inet_ntoa(&addr_srv.sin_addr);
 			printk("connected to : %s %d\n", tmp, ntohs(addr_srv.sin_port));
 			kfree(tmp);
-			printk("kfree(tmp)");
 			ret = 0;
 			break;
 		case slave_IOCTL_MMAP:
@@ -172,12 +168,12 @@ static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long
 				printk("kclose cli error\n");
 				return -1;
 			}
+			set_fs(old_fs);
 			ret = 0;
 			break;
 		default:
             pgd = pgd_offset(current->mm, ioctl_param);
-			p4d = p4d_offset(pgd, ioctl_param);
-			pud = pud_offset(p4d, ioctl_param);
+			pud = pud_offset(pgd, ioctl_param);
 			pmd = pmd_offset(pud, ioctl_param);
 			ptep = pte_offset_kernel(pmd , ioctl_param);
 			pte = *ptep;
@@ -185,12 +181,11 @@ static long slave_ioctl(struct file *file, unsigned int ioctl_num, unsigned long
 			ret = 0;
 			break;
 	}
-    set_fs(old_fs);
 
 	return ret;
 }
 
-ssize_t receive_msg(struct file *filp, char *buf, size_t count, loff_t *offp )
+int receive_msg(struct file *filp, char *buf, size_t count, loff_t *offp )
 {
 //call when user is reading from this device
 	char msg[BUF_SIZE];

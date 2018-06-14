@@ -1,12 +1,14 @@
-cd ./master_device
+cd ./ksocket
 make clean
-sudo rmmod master_device.ko
+rmmod ksocket.ko
+cd ../master_device
+make clean
+rmmod master_device.ko
 cd ../slave_device
 make clean
-sudo rmmod slave_device.ko
-cd ../ksocket
-make clean
-sudo rmmod ksocket.ko
+rmmod slave_device.ko
 cd ../user_program
 make clean
 cd ..
+
+
