@@ -1,1 +1,0 @@
-cmd_/home/garychen/os_project2_2018/src/master_device/master_device.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /home/garychen/os_project2_2018/src/master_device/master_device.ko /home/garychen/os_project2_2018/src/master_device/master_device.o /home/garychen/os_project2_2018/src/master_device/master_device.mod.o ;  true
