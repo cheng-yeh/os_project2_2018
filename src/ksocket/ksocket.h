@@ -7,7 +7,10 @@
  * 
  * This code is licenced under the GPL
  * Feel free to contact me if any questions
- * 
+ *
+ * @2017
+ * Hardik Bagdi (hbagdi1@binghamton.edu)
+ * Changes for Compatibility with Linux 4.9 to use iov_iter
  */
 
 #ifndef _ksocket_h_

@@ -17,8 +17,8 @@ size_t get_filesize(const char* filename);//get the size of the input file
 int main (int argc, char* argv[])
 {
 	char buf[BUF_SIZE];
-	int i, dev_fd, file_fd;// the fd for the device and the fd for the input file
-	size_t ret, file_size, offset = 0, tmp;
+	int i, dev_fd, file_fd, ret;// the fd for the device and the fd for the input file
+	size_t file_size, offset = 0, tmp;
 	char file_name[50], method[20];
 	char *kernel_address = NULL, *file_address = NULL;
 	struct timeval start;
@@ -54,7 +54,8 @@ int main (int argc, char* argv[])
 		perror("ioclt server create socket error\n");
 		return 1;
 	}
-
+	
+	void* mmapped;
 
 	switch(method[0])
 	{
@@ -62,24 +63,27 @@ int main (int argc, char* argv[])
 			do
 			{
 				ret = read(file_fd, buf, sizeof(buf)); // read from the input file
-				write(dev_fd, buf, ret);//write to the the device
+				//printf("file write: %d\n", write(dev_fd, buf, ret));//write to the the device
+				write(dev_fd, buf, ret);
 			}while(ret > 0);
 			break;
-		case 'm': //mmap : magic()
-			void* mmapped = mmap(NULL, file_size, PROT_READ, MAP_PRIVATE | MAP_POPULATE, file_fd, 0);
+		case 'm': //mmap : magic!
+			mmapped = mmap(NULL, file_size, PROT_READ, MAP_PRIVATE | MAP_POPULATE, file_fd, 0);
 			
 			if(mmapped == MAP_FAILED){
-				perror("mmap fial!\n")
+				perror("mmap fial!\n");
 				return -1;
 			}
 			ret = file_size;
 			do{
-				if(ret >= PAGE_SIZE)
-					write(dev_fd, mmapped, PAGE_SIZE);
+				if(ret >= 512)
+					//printf("mmap write: %d\n", write(dev_fd, mmapped, 512));
+					write(dev_fd, mmapped, 512);
 				else
+					//printf("mmap write: %d\n", write(dev_fd, mmapped, ret));
 					write(dev_fd, mmapped, ret);	
 				
-				ret -= PAGE_SIZE;
+				ret -= 512;
 			}while(ret > 0);
 	}
 
@@ -90,7 +94,7 @@ int main (int argc, char* argv[])
 	}
 	gettimeofday(&end, NULL);
 	trans_time = (end.tv_sec - start.tv_sec)*1000 + (end.tv_usec - start.tv_usec)*0.0001;
-	printf("Transmission time: %lf ms, File size: %d bytes\n", trans_time, file_size / 8);
+	printf("Master transmission time: %lf ms, File size: %d bytes with method %s\n", trans_time, file_size / 8, method);
 
 	close(file_fd);
 	close(dev_fd);
