@@ -77,10 +77,10 @@ int main (int argc, char* argv[])
 			do{
 				if(ret >= 512)
 					//printf("mmap write: %d\n", write(dev_fd, mmapped, 512));
-					write(dev_fd, mmapped, 512);
+					write(dev_fd, mmapped + file_size - ret, 512);
 				else
 					//printf("mmap write: %d\n", write(dev_fd, mmapped, ret));
-					write(dev_fd, mmapped, ret);	
+					write(dev_fd, mmapped + file_size - ret, ret);	
 				
 				ret -= 512;
 			}while(ret > 0);
