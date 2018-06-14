@@ -205,6 +205,7 @@ static ssize_t send_msg(struct file *file, const char __user *buf, size_t count,
 	char msg[BUF_SIZE];
 	if(copy_from_user(msg, buf, count))
 		return -ENOMEM;
+	printk("sending msg: %s", msg);
 	ksend(sockfd_cli, msg, count, 0);
 
 	return count;
