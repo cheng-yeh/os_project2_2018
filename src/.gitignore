@@ -1,5 +1,7 @@
 /data/*_out
 /*/*.o*
+/*/*.ko
+/*/*.o
 /*/sxgdebug.h
 /*/*.symvers
 /user_program/master
