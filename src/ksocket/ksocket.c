@@ -7,6 +7,10 @@
  * 
  * This code is licenced under the GPL
  * Feel free to contact me if any questions
+ *
+ * @2017
+ * Hardik Bagdi (hbagdi1@binghamton.edu)
+ * Changes for Compatibility with Linux 4.9 to use iov_iter
  * 
  */
 #include <linux/module.h>
@@ -18,7 +22,8 @@
 #include <asm/processor.h>
 #include <asm/uaccess.h>
 #include "ksocket.h"
-#include "sxgdebug.h"
+//#include "nested.h"
+//#include "sxgdebug.h"
 
 #define KSOCKET_NAME	"ksocket"
 #define KSOCKET_VERSION	"0.0.2"
@@ -31,6 +36,20 @@ MODULE_AUTHOR(KSOCKET_AUTHOR);
 MODULE_DESCRIPTION(KSOCKET_NAME"-"KSOCKET_VERSION"\n"KSOCKET_DESCPT);
 MODULE_LICENSE("Dual BSD/GPL");
 
+/*
+static void (*origSk)(struct sock *sk, int bytes) = NULL;
+
+static void yh_sk_data_ready(struct sock *sk, int bytes)
+{
+	if (origSk) {
+		(*origSk)(sk, bytes);
+	}
+
+	wake_up_rcv();
+	return;
+}
+*/
+
 ksocket_t ksocket(int domain, int type, int protocol)
 {
 	struct socket *sk = NULL;
@@ -39,11 +58,24 @@ ksocket_t ksocket(int domain, int type, int protocol)
 	ret = sock_create(domain, type, protocol, &sk);
 	if (ret < 0)
 	{
-		sxg_debug("sock_create failed\n");
+		printk(KERN_INFO "sock_create failed\n");
 		return NULL;
 	}
+
+	/*
+	if (sk && sk->sk) {
+		if (sk->sk->sk_data_ready) {
+			origSk = sk->sk->sk_data_ready;
+			sk->sk->sk_data_ready = yh_sk_data_ready;
+		} else {
+			printk(KERN_INFO "sk->sk->sk_data_ready is NULL\n");
+		}
+	} else {
+		printk(KERN_INFO "sk or sk->sk is NULL\n");
+	}
+	*/
 	
-	sxg_debug("sock_create sk= 0x%p\n", sk);
+	printk("sock_create sk= 0x%p\n", sk);
 	
 	return sk;
 }
@@ -55,7 +87,7 @@ int kbind(ksocket_t socket, struct sockaddr *address, int address_len)
 
 	sk = (struct socket *)socket;
 	ret = sk->ops->bind(sk, address, address_len);
-	sxg_debug("kbind ret = %d\n", ret);
+	printk("kbind ret = %d\n", ret);
 	
 	return ret;
 }
@@ -94,7 +126,7 @@ ksocket_t kaccept(ksocket_t socket, struct sockaddr *address, int *address_len)
 	
 	sk = (struct socket *)socket;
 
-	sxg_debug("family = %d, type = %d, protocol = %d\n",
+	printk("family = %d, type = %d, protocol = %d\n",
 					sk->sk->sk_family, sk->type, sk->sk->sk_protocol);
 	//new_sk = sock_alloc();
 	//sock_alloc() is not exported, so i use sock_create() instead
@@ -107,7 +139,7 @@ ksocket_t kaccept(ksocket_t socket, struct sockaddr *address, int *address_len)
 	new_sk->type = sk->type;
 	new_sk->ops = sk->ops;
 	
-	ret = sk->ops->accept(sk, new_sk, 0 /*sk->file->f_flags*/);
+	ret = sk->ops->accept(sk, new_sk, 0, true);
 	if (ret < 0)
 		goto error_kaccept;
 	
@@ -135,15 +167,23 @@ ssize_t krecv(ksocket_t socket, void *buffer, size_t length, int flags)
 	mm_segment_t old_fs;
 #endif
 
+	memset(&msg,0,sizeof(msg));
 	sk = (struct socket *)socket;
 
 	iov.iov_base = (void *)buffer;
 	iov.iov_len = (__kernel_size_t)length;
 
+	//type
+	msg.msg_iter.type = READ;
+	//address
 	msg.msg_name = NULL;
 	msg.msg_namelen = 0;
-	msg.msg_iov = &iov;
-	msg.msg_iovlen = 1;
+	//msg_iter
+	msg.msg_iter.iov = &iov;
+	msg.msg_iter.iov_offset = 0;
+	msg.msg_iter.count = iov.iov_len;
+	msg.msg_iter.nr_segs = 1;
+	//control
 	msg.msg_control = NULL;
 	msg.msg_controllen = 0;
 
@@ -157,7 +197,8 @@ ssize_t krecv(ksocket_t socket, void *buffer, size_t length, int flags)
 	old_fs = get_fs();
 	set_fs(KERNEL_DS);
 #endif
-	ret = sock_recvmsg(sk, &msg, length, flags);
+	//hardik
+	ret = sock_recvmsg(sk, &msg, flags);
 #ifndef KSOCKET_ADDR_SAFE
 	set_fs(old_fs);
 #endif
@@ -185,10 +226,17 @@ ssize_t ksend(ksocket_t socket, const void *buffer, size_t length, int flags)
 	iov.iov_base = (void *)buffer;
 	iov.iov_len = (__kernel_size_t)length;
 
+	//type
+	msg.msg_iter.type = READ;
+	//address
 	msg.msg_name = NULL;
 	msg.msg_namelen = 0;
-	msg.msg_iov = &iov;
-	msg.msg_iovlen = 1;
+	//msg_iter
+	msg.msg_iter.iov = &iov;
+	msg.msg_iter.iov_offset = 0;
+	msg.msg_iter.count = iov.iov_len;
+	msg.msg_iter.nr_segs = 1;
+	//control
 	msg.msg_control = NULL;
 	msg.msg_controllen = 0;
 
@@ -198,7 +246,8 @@ ssize_t ksend(ksocket_t socket, const void *buffer, size_t length, int flags)
 	old_fs = get_fs();
 	set_fs(KERNEL_DS);
 #endif
-	len = sock_sendmsg(sk, &msg, length);//?
+	//hardik
+	len = sock_sendmsg(sk, &msg);//?
 #ifndef KSOCKET_ADDR_SAFE
 	set_fs(old_fs);
 #endif
@@ -250,10 +299,17 @@ ssize_t krecvfrom(ksocket_t socket, void * buffer, size_t length,
 	iov.iov_base = (void *)buffer;
 	iov.iov_len = (__kernel_size_t)length;
 
+	//type
+	msg.msg_iter.type = READ;
+	//address
 	msg.msg_name = address;
 	msg.msg_namelen = 128;
-	msg.msg_iov = &iov;
-	msg.msg_iovlen = 1;
+	//msg_iter
+	msg.msg_iter.iov = &iov;
+	msg.msg_iter.iov_offset = 0;
+	msg.msg_iter.count = iov.iov_len;
+	msg.msg_iter.nr_segs = 1;
+	//control
 	msg.msg_control = NULL;
 	msg.msg_controllen = 0;
 	
@@ -261,7 +317,8 @@ ssize_t krecvfrom(ksocket_t socket, void * buffer, size_t length,
 	old_fs = get_fs();
 	set_fs(KERNEL_DS);
 #endif
-	len = sock_recvmsg(sk, &msg, length, flags);
+	//hardik
+	len = sock_recvmsg(sk, &msg, flags);
 #ifndef KSOCKET_ADDR_SAFE
 	set_fs(old_fs);
 #endif
@@ -291,8 +348,14 @@ ssize_t ksendto(ksocket_t socket, void *message, size_t length,
 	iov.iov_base = (void *)message;
 	iov.iov_len = (__kernel_size_t)length;
 
-	msg.msg_iov = &iov;
-	msg.msg_iovlen = 1;
+	//type
+	msg.msg_iter.type = READ;
+	//msg_iter
+	msg.msg_iter.iov = &iov;
+	msg.msg_iter.iov_offset = 0;
+	msg.msg_iter.count = iov.iov_len;
+	msg.msg_iter.nr_segs = 1;
+	//control
 	msg.msg_control = NULL;
 	msg.msg_controllen = 0;
 
@@ -307,7 +370,8 @@ ssize_t ksendto(ksocket_t socket, void *message, size_t length,
 	old_fs = get_fs();
 	set_fs(KERNEL_DS);
 #endif
-	len = sock_sendmsg(sk, &msg, length);//?
+	//hardik
+	len = sock_sendmsg(sk, &msg);//?
 #ifndef KSOCKET_ADDR_SAFE
 	set_fs(old_fs);
 #endif
