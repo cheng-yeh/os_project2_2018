@@ -20,6 +20,7 @@
 #include <linux/mm.h>
 #include <asm/page.h>
 #include <asm/pgtable.h>
+#include <asm/highmem.h>
 #ifndef VM_RESERVED
 #define VM_RESERVED   (VM_DONTEXPAND | VM_DONTDUMP)
 #endif
@@ -116,15 +117,12 @@ static int __init master_init(void)
 		printk("listen failed\n");
 		return -1;
 	}
-    printk("master_device init OK\n");
-	set_fs(old_fs);
 	return 0;
 }
 
 static void __exit master_exit(void)
 {
 	misc_deregister(&master_dev);
-    printk("misc_deregister\n");
 	if(kclose(sockfd_srv) == -1)
 	{
 		printk("kclose srv error\n");
@@ -152,12 +150,9 @@ static long master_ioctl(struct file *file, unsigned int ioctl_num, unsigned lon
 	size_t data_size = 0, offset = 0;
 	char *tmp;
 	pgd_t *pgd;
-	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
-    pte_t *ptep, pte;
-	old_fs = get_fs();
-	set_fs(KERNEL_DS);
+        pte_t *ptep, pte;
 	switch(ioctl_num){
 		case master_IOCTL_CREATESOCK:// create socket and accept a connection
 			sockfd_cli = kaccept(sockfd_srv, (struct sockaddr *)&addr_cli, &addr_len);
@@ -186,8 +181,7 @@ static long master_ioctl(struct file *file, unsigned int ioctl_num, unsigned lon
 			break;
 		default:
 			pgd = pgd_offset(current->mm, ioctl_param);
-			p4d = p4d_offset(pgd, ioctl_param);
-			pud = pud_offset(p4d, ioctl_param);
+			pud = pud_offset(pgd, ioctl_param);
 			pmd = pmd_offset(pud, ioctl_param);
 			ptep = pte_offset_kernel(pmd , ioctl_param);
 			pte = *ptep;
@@ -196,7 +190,6 @@ static long master_ioctl(struct file *file, unsigned int ioctl_num, unsigned lon
 			break;
 	}
 
-	set_fs(old_fs);
 	return ret;
 }
 static ssize_t send_msg(struct file *file, const char __user *buf, size_t count, loff_t *data)
@@ -205,7 +198,6 @@ static ssize_t send_msg(struct file *file, const char __user *buf, size_t count,
 	char msg[BUF_SIZE];
 	if(copy_from_user(msg, buf, count))
 		return -ENOMEM;
-	printk("sending msg: %s", msg);
 	ksend(sockfd_cli, msg, count, 0);
 
 	return count;
@@ -218,3 +210,4 @@ static ssize_t send_msg(struct file *file, const char __user *buf, size_t count,
 module_init(master_init);
 module_exit(master_exit);
 MODULE_LICENSE("GPL");
+
