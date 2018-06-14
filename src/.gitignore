@@ -1,1 +1,6 @@
-*_out
+/data/*_out
+/*/*.o*
+/*/sxgdebug.h
+/*/*.symvers
+/user_program/master
+/user_program/slave

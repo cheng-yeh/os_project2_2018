@@ -1,5 +1,0 @@
-*.o*
-sxgdebug.h
-*.symvers
-master
-slave
