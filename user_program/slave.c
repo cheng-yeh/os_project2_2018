@@ -47,6 +47,7 @@ int main (int argc, char* argv[])
 		return 1;
 	}
 
+    write(1, "ioctl success\n", 14);
 
 	switch(method[0])
 	{
