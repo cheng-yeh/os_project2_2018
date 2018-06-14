@@ -84,6 +84,9 @@ int main (int argc, char* argv[])
 				
 				ret -= 512;
 			}while(ret > 0);
+			
+			if(munmap(mmapped, file_size) == -1)
+				perror("un-mapping file!\n");
 	}
 
 	if(ioctl(dev_fd, 0x12345679) == -1) // end sending data, close the connection
