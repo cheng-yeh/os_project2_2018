@@ -11,8 +11,11 @@
 
 #define PAGE_SIZE 4096
 #define BUF_SIZE 512
-size_t get_filesize(const char* filename);//get the size of the input file
 
+# define DEBUG
+# define ANALYZE
+
+size_t get_filesize(const char* filename);//get the size of the input file
 
 int main (int argc, char* argv[])
 {
@@ -96,7 +99,12 @@ int main (int argc, char* argv[])
 	}
 	gettimeofday(&end, NULL);
 	trans_time = (end.tv_sec - start.tv_sec)*1000 + (end.tv_usec - start.tv_usec)*0.0001;
+#ifdef DEBUG
 	printf("Master transmission time: %lf ms, File size: %d bytes with method %s\n", trans_time, file_size / 8, method);
+#endif
+#ifdef ANALYZE
+	printf("%lf, %ld, %s\n", trans_time, file_size / 8, method);
+#endif
 
 	close(file_fd);
 	close(dev_fd);

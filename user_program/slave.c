@@ -11,6 +11,10 @@
 
 #define PAGE_SIZE sysconf(_SC_PAGE_SIZE)
 #define BUF_SIZE 512
+
+# define DEBUG
+# define ANALYZE
+
 int main (int argc, char* argv[])
 {
 	char buf[BUF_SIZE];
@@ -50,9 +54,9 @@ int main (int argc, char* argv[])
 		perror("ioclt create slave socket error\n");
 		return 1;
 	}
-	
+#ifdef DEBUG	
     write(1, "ioctl success\n", 14);
-    
+#endif
 	switch(method[0])
 	{
 		case 'f'://fcntl : read()/write()
@@ -118,8 +122,12 @@ int main (int argc, char* argv[])
 	}
 	gettimeofday(&end, NULL);
 	trans_time = (end.tv_sec - start.tv_sec)*1000 + (end.tv_usec - start.tv_usec)*0.0001;
+#ifdef DEBUG
 	printf("Slave transmission time: %lf ms, File size: %d bytes with method %s\n", trans_time, file_size / 8, method);
-
+#endif
+#ifdef ANALYZE
+	printf("%lf, %ld, %s\n", trans_time, file_size / 8, method);
+#endif
 
 	close(file_fd);
 	close(dev_fd);
