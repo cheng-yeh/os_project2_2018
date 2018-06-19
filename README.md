@@ -10,22 +10,14 @@ This is the source code of operating system project2.
 ./user_program : the user program "master" and "slave"
 ```
 
-To use it, please:
-1. change to super user
-2. execute "./compile.sh" to compile codes and install modules
-3. follow the input instrutions in the spec, 
-i.e.
+## How to Run
+
 ```
-./master ../data/file1_in mmap
-./slave ../data/file1_out fcntl 127.0.0.1
+sh compile.sh
+sh exec.sh
 ```
 
-Make sure that you are under the path "./user_program" when you execute user programs.
-
-Though the execution order of user program "master" and "slave" does not matter,
-it is suggested to execute "master" first to get more precise transmission time.
-
-## Analyze:
+## Analyze Steps:
 
 make dummy data:
 
@@ -34,3 +26,14 @@ bash createDummyFiles.sh
 ```
 
 files will be created in `/data`
+
+Comment `#difine DUBUG` in `master.c` and `slave.c`
+
+```
+sh exec.sh
+```
+
+the output format:
+```
+ trans_time, file_size, method
+```
