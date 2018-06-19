@@ -1,0 +1,11 @@
+/*/*_out
+/*/*.o*
+/*/*.ko*
+/*/.*
+/*/*.mod*
+/*/*.symvers
+/user_program/master
+/user_program/slave
+*.in
+*.out
+*.json
