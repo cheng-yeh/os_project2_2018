@@ -109,7 +109,6 @@ int main (int argc, char* argv[])
 				file_size += ret;
 			}while(ret > 0);
 			
-			
 			if(msync(mmapped, PAGE_SIZE, MS_ASYNC) == -1)
 				perror("Cannot sync to disk\n");
 			if(munmap(mmapped, PAGE_SIZE) == -1)
