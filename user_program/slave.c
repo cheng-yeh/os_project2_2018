@@ -19,7 +19,7 @@ int main (int argc, char* argv[])
 {
 	char buf[BUF_SIZE];
 	int i, dev_fd, file_fd;// the fd for the device and the fd for the input file
-	size_t ret, file_size = 0, data_size = -1, page_size = 0;
+	size_t ret = 0, file_size = 0, data_size = -1, page_size = 0;
 	char file_name[50];
 	char method[20];
 	char ip[20];
@@ -70,7 +70,7 @@ int main (int argc, char* argv[])
 		
 		case 'm': //mmap : magic!
 			
-			while((ret = read(dev_fd, buf, sizeof(buf))) > 0){
+			do{
 				size_t remain = 0;
 				
 				if((long)PAGE_SIZE - (long)data_size - (long)ret < 0 || data_size == -1){
@@ -94,18 +94,21 @@ int main (int argc, char* argv[])
 						perror("Cannot resize the file\n");
 
 					mmapped = mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, file_fd, page_size);
+					
+					ioctl(dev_fd, 0x12345680, mmapped + page_size);
+					
 					if(mmapped == MAP_FAILED)
 						perror("mmap fial!\n");
 
 					data_size = 0;
 				}
 				
-				for(size_t i = 0; i < ret - remain; ++i)
-					mmapped[data_size + i] = buf[remain + i];
-
+				ret = read(dev_fd, mmapped + data_size, sizeof(mmapped));
+				
 				data_size += ret;
 				file_size += ret;
-			}
+			}while(ret > 0);
+			
 			
 			if(msync(mmapped, PAGE_SIZE, MS_ASYNC) == -1)
 				perror("Cannot sync to disk\n");
