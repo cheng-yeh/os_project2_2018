@@ -83,12 +83,9 @@ int main (int argc, char* argv[])
 					write(dev_fd, mmapped + file_size - ret, 512);
 				else
 					//printf("mmap write: %d\n", write(dev_fd, mmapped, ret));
-					write(dev_fd, mmapped + file_size - ret, ret);
-				
-				ioctl(dev_fd, 0x12345680, mmapped + file_size - ret);
+					write(dev_fd, mmapped + file_size - ret, ret);	
 				
 				ret -= 512;
-				
 			}while(ret > 0);
 			
 			if(munmap(mmapped, file_size) == -1)

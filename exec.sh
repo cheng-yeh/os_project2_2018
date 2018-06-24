@@ -4,7 +4,6 @@ then
 else
 	method=m
 fi
-
 for FILE in `find ./data -name *.in`
 do
     sudo ./user_program/master $FILE $method &
