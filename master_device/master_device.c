@@ -133,6 +133,7 @@ static void __exit master_exit(void)
 	set_fs(old_fs);
 	printk(KERN_INFO "master exited!\n");
 	debugfs_remove(file1);
+	return;
 }
 
 int master_close(struct inode *inode, struct file *filp)
@@ -205,14 +206,10 @@ static ssize_t send_msg(struct file *file, const char __user *buf, size_t count,
 	char msg[BUF_SIZE];
 	if(copy_from_user(msg, buf, count))
 		return -ENOMEM;
-	printk("sending msg: %s", msg);
 	ksend(sockfd_cli, msg, count, 0);
 
 	return count;
-
 }
-
-
 
 
 module_init(master_init);

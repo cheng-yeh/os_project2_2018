@@ -96,6 +96,7 @@ static void __exit slave_exit(void)
 	misc_deregister(&slave_dev);
 	printk(KERN_INFO "slave exited!\n");
 	debugfs_remove(file1);
+	return;
 }
 
 
