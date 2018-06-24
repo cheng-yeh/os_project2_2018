@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 
-#define PAGE_SIZE sysconf(_SC_PAGE_SIZE)
+#define PAGE_SIZE sysconf(_SC_PAGE_SIZE) * 4
 #define BUF_SIZE 512
 
 # define DEBUG
